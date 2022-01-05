@@ -49,6 +49,7 @@
 
 #define _BSD_SOURCE /* for vsyslog() */
 
+#include <linux/fs.h>
 #include <fuse.h>
 #include <ulockmgr.h>
 #include <sys/xattr.h>
@@ -738,6 +739,17 @@ static int ciopfs_read(const char *path, char *buf, size_t size, off_t offset,
 	return res;
 }
 
+static int ciopfs_ioctl(const char *path, unsigned int cmd, void *arg,
+                      struct fuse_file_info *fi, unsigned int flags, void *data)
+{
+if(cmd==FS_IOC_GETFLAGS)
+{
+*(int*)data=0;
+return 0;
+}
+	return -EINVAL;
+}
+
 static int ciopfs_write(const char *path, const char *buf, size_t size,
                         off_t offset, struct fuse_file_info *fi)
 {
@@ -928,7 +940,8 @@ struct fuse_operations ciopfs_operations = {
 	.listxattr	= ciopfs_listxattr,
 	.removexattr	= ciopfs_removexattr,
 	.lock		= ciopfs_lock,
-	.init		= ciopfs_init
+	.init		= ciopfs_init,
+	.ioctl	= ciopfs_ioctl
 };
 
 static void usage(const char *name)
